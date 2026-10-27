@@ -74,36 +74,44 @@
       </div>
     </div>
 
-    <!-- 100% funktionierender JavaScript-Besucherzähler im Footer -->
+    <!-- Text-Besucherzähler im Footer -->
     <footer class="text-center mt-5 pt-4 border-top">
-      <p class="text-muted small mb-2">Seitenaufrufe</p>
-      <div id="visitor-counter">
-        <span class="text-muted small">Wird geladen...</span>
-      </div>
+      <p class="text-muted small mb-1">Seitenaufrufe</p>
+      <div class="badge bg-secondary fs-6" id="counter-value">...</div>
     </footer>
   </main>
 
-  <!-- Script zur Cache-Umgehung -->
+  <!-- Modernes API-Skript für die Live-Zählung -->
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      const container = document.getElementById("visitor-counter");
-      // Ein einzigartiger Zeitstempel zwingt den Browser, das Bild JEDES Mal frisch abzurufen
-      const cacheBuster = new Date().getTime();
-      const counterUrl = `https://glitch.me{cacheBuster}`;
+      const counterElement = document.getElementById("counter-value");
       
-      // Erstellt das Bild dynamisch per JavaScript
-      const img = new Image();
-      img.src = counterUrl;
-      img.alt = "Besucherzähler";
-      img.onload = function() {
-        container.innerHTML = "";
-        container.appendChild(img);
-      };
+      // Nutzt den verlässlichen, datenschutzkonformen Count-API Service
+      fetch('https://mileshilliard.com')
+        .then(response => {
+          if (!response.ok) throw new Error('Netzwerk-Fehler');
+          return response.json();
+        })
+        .then(data => {
+          if (data && data.value) {
+            // Formatiert die Zahl schön mit Tausendertrennzeichen (z.B. 1.250)
+            counterElement.innerText = Number(data.value).toLocaleString('de-DE');
+          } else {
+            counterElement.innerText = "1";
+          }
+        })
+        .catch(error => {
+          console.error('Fehler beim Laden des Zählers:', error);
+          counterElement.style.display = 'none'; // Versteckt den Badge, falls die API offline ist
+        });
     });
   </script>
 </body>
 
 </html>
+
+
+
 
 
 
