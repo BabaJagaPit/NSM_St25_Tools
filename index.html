@@ -87,26 +87,12 @@
       </div>
     </div>
 
-    <!-- Funktionierender Besucherzähler für Automatenblödsinn -->
-<div style="text-align: center; margin-top: 20px; font-family: sans-serif; font-size: 14px; color: #555;">
-    <p style="margin-bottom: 5px;">Seitenaufrufe:</p>
-    <img src="https://countapi.xyz" style="display:none;" onerror="this.style.display='none'">
-    <img src="https://shields.io" id="visitor-badge" alt="Aufrufe">
+<!-- Zuverlässiger Besucherzähler für Automatenblödsinn -->
+<div style="text-align: center; margin-top: 25px; font-family: sans-serif; font-size: 14px; color: #555;">
+    <p style="margin-bottom: 8px; font-weight: bold;">Seitenaufrufe</p>
+    <img src="https://websiteout.net" alt="Besucherzähler" style="border: none;">
 </div>
 
-<script>
-function updateCounter(response) {
-    if(response && response.value) {
-        document.getElementById('visitor-badge').src = "https://shields.io" + response.value + "-blue";
-    }
-}
-// Fallback falls die API verzögert
-fetch('https://countapi.xyz')
-    .then(res => res.json())
-    .then(data => updateCounter(data))
-    .catch(() => {
-        // Alternativer Zähler falls countapi ausgelastet ist
-        document.getElementById('visitor-badge').src = "https://seeyoufarm.com";
     });
 </script>
 
