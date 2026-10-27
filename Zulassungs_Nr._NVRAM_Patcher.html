@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NVRAM Custom Patcher</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            background: white;
+            border-radius: 8px;
+        }
+        h2 { color: #2c3e50; border-bottom: 2px solid #2ecc71; padding-bottom: 10px; }
+        .box { background: #f8f9fa; border: 1px dashed #ccc; padding: 20px; text-align: center; border-radius: 6px; margin: 20px 0; }
+        .input-group { margin: 15px 0 25px 0; text-align: left; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #2c3e50; }
+        input[type="number"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; box-sizing: border-box; }
+        input[type="file"] { display: none; }
+        .btn { display: inline-block; padding: 12px 24px; background: #2ecc71; color: white; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; margin-top: 10px; }
+        .btn:hover { background: #27ae60; }
+        #status { margin-top: 15px; font-weight: bold; }
+        .success { color: #27ae60; }
+        .error { color: #c0392b; }
+        .info { font-size: 0.9em; color: #666; text-align: left; background: #eee; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <h2>🎰 Zulassungs Nr. NVRAM Patcher</h2>
+    <p>Gib deine gewünschte Nummer ein und lade anschließend die 8-KB-Datei hoch.</p>
+    
+    <div class="input-group">
+        <label for="numInput">Neue Zulassungs- / Gerätenummer:</label>
+        <input type="number" id="numInput" value="100000000" min="0" max="4294967295">
+    </div>
+
+    <div class="box">
+        <label for="fileInput" class="btn">Datei auswählen & patchen (.bin)</label>
+        <input type="file" id="fileInput" accept=".bin,.rom,.ece">
+        <div id="status">Warte auf Eingabe...</div>
+    </div>
+
+    <div class="info">
+        <strong>Technische Details:</strong><br>
+        • Ziel-Offset: Byte 8166 (0x1FE6)<br>
+        • Format: 32-Bit Unsigned Integer (Little-Endian)
+    </div>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const statusDiv = document.getElementById('status');
+            const numInput = document.getElementById('numInput');
+            
+            if (!file) return;
+
+            // Strict-Check auf exakte 8 KB Dateigröße
+            if (file.size !== 8192) {
+                statusDiv.className = 'error';
+                statusDiv.innerText = `Fehler: Datei muss exakt 8192 Bytes groß sein (Deine Datei: ${file.size} Bytes).`;
+                return;
+            }
+
+            // Eingabewert validieren
+            const targetNumber = parseInt(numInput.value, 10);
+            if (isNaN(targetNumber) || targetNumber < 0 || targetNumber > 4294967295) {
+                statusDiv.className = 'error';
+                statusDiv.innerText = "Fehler: Bitte gib eine gültige Zahl zwischen 0 und 4294967295 ein.";
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const buffer = event.target.result;
+                const view = new Uint8Array(buffer);
+
+                // Das feste Ziel-Offset (26 Bytes vor dem Dateiende)
+                const targetOffset = 8192 - 26; // Index 8166 / 0x1FE6
+
+                // Umrechnung der Dezimalzahl in 4 Bytes (Little-Endian)
+                const byte0 = targetNumber & 0xFF;
+                const byte1 = (targetNumber >> 8) & 0xFF;
+                const byte2 = (targetNumber >> 16) & 0xFF;
+                const byte3 = (targetNumber >> 24) & 0xFF;
+
+                // Alten Wert auslesen für die Anzeige
+                let altHex = "";
+                for(let h=0; h<4; h++) {
+                    altHex += view[targetOffset + h].toString(16).toUpperCase().padStart(2, '0') + " ";
+                }
+
+                // Werte blind an der Adresse überschreiben
+                view[targetOffset]     = byte0;
+                view[targetOffset + 1] = byte1;
+                view[targetOffset + 2] = byte2;
+                view[targetOffset + 3] = byte3;
+
+                // Neuen Hex-Wert für die Anzeige generieren
+                const neuHex = `${byte0.toString(16).toUpperCase().padStart(2, '0')} ${byte1.toString(16).toUpperCase().padStart(2, '0')} ${byte2.toString(16).toUpperCase().padStart(2, '0')} ${byte3.toString(16).toUpperCase().padStart(2, '0')}`;
+
+                // Erfolg melden und Download starten
+                statusDiv.className = 'success';
+                statusDiv.innerText = `Erfolgreich! Alter Hex-Wert (${altHex.trim()}) wurde durch ${targetNumber} (Hex: ${neuHex}) ersetzt.`;
+                
+                // Datei-Download triggern
+                const blob = new Blob([view], {type: "application/octet-stream"});
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                
+                let alterName = file.name.substring(0, file.name.lastIndexOf('.'));
+                link.download = `${alterName}_patched_${targetNumber}.bin`;
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+
+            reader.readAsArrayBuffer(file);
+        });
+    </script>
+</body>
+</html>

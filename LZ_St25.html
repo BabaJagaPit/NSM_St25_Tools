@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Byte-Konverter</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f7f6;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .container {
+      background: white;
+      padding: 45px;
+      border-radius: 12px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 650px;
+    }
+    h2 {
+      margin-top: 0;
+      color: #007BFF;
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    h2 + h2 {
+      color: #555;
+      font-size: 24px;
+      margin-bottom: 30px;
+    }
+    .form-group {
+      margin-bottom: 30px;
+    }
+    label {
+      display: block;
+      margin-bottom: 12px;
+      font-weight: bold;
+      font-size: 20px;
+    }
+    input[type="date"] {
+      width: 100%;
+      padding: 16px;
+      box-sizing: border-box;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      font-size: 22px;
+      font-family: inherit;
+    }
+    .btn-group {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 10px;
+    }
+    button {
+      flex: 2;
+      padding: 18px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 20px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .btn-back {
+      flex: 1;
+      background-color: #6c757d;
+    }
+    .btn-back:hover {
+      background-color: #5a6268;
+    }
+    .output-box {
+      margin-top: 35px;
+      padding: 25px;
+      background-color: #e9ecef;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 18px;
+    }
+    .output-item {
+      margin-bottom: 15px;
+    }
+    .output-item:last-child {
+      margin-bottom: 0;
+    }
+    .highlight {
+      font-weight: bold;
+      color: #d63384;
+      font-size: 20px;
+    }
+    .image-container {
+      margin-top: 35px;
+      text-align: center;
+    }
+    .image-container img {
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Laufzeit Berechnung NSM St25</h2>
+  <h2>Timekeeper "ST M48T18"</h2>
+  
+  <div class="form-group">
+    <label for="dateInput">Ablauf-Datum auswählen:</label>
+    <!-- max ist fest auf 31.12.2099 eingestellt. min wird per JavaScript dynamisch auf heute gesetzt -->
+    <input type="date" id="dateInput" max="2099-12-31" value="2033-04-30">
+  </div>
+  
+  <div class="btn-group">
+    <button class="btn-back" onclick="window.history.back();">⬅ Zurück</button>
+    <button onclick="calculateBytes()">Berechnen</button>
+  </div>
+  
+  <div class="output-box">
+    <div class="output-item">Dezimalwert: <span id="decOutput" class="highlight">-</span></div>
+    <div class="output-item">Byte-Sequenz: <span id="hexOutput" class="highlight">-</span></div>
+  </div>
+
+  <div class="image-container">
+    <img src="HEX_Position.jpg" alt="Beschreibung des Bildes">
+  </div>
+</div>
+
+<script>
+// Dynamisch das aktuelle Datum als Mindestdatum im Kalender setzen
+const today = new Date().toISOString().split('T')[0];
+document.getElementById("dateInput").setAttribute("min", today);
+
+function calculateBytes() {
+  const dateInputElement = document.getElementById("dateInput");
+  const dateValue = dateInputElement.value;
+  
+  // 1. Validierung: Prüfen ob überhaupt ein Datum eingetragen ist
+  if (!dateValue) {
+    alert("Bitte wähle ein gültiges Datum aus.");
+    return;
+  }
+
+  // 2. Validierung: Prüfen ob das Datum im erlaubten Bereich liegt (z.B. bei manueller Tastatureingabe)
+  const maxDate = "2099-12-31";
+  if (dateValue < today || dateValue > maxDate) {
+    alert("Das Datum muss zwischen heute und dem 31.12.2099 liegen.");
+    return;
+  }
+
+  // Das Eingabefeld liefert "JJJJ-MM-TT". Wir zerlegen es und bauen "TTMMJJJJ" daraus.
+  const parts = dateValue.split("-");
+  const formattedDateStr = parts[2] + parts[1] + parts[0]; 
+  const dateInt = parseInt(formattedDateStr);
+
+  const decimalValue = dateInt * 9 - 65;
+
+  const byte0 = decimalValue & 0xFF;
+  const byte1 = (decimalValue >> 8) & 0xFF;
+  const byte2 = (decimalValue >> 16) & 0xFF;
+  const byte3 = (decimalValue >> 24) & 0xFF;
+  
+  const valueBytes = [byte0, byte1, byte2, byte3];
+  const complementBytes = valueBytes.map(b => (~b) & 0xFF);
+  const combinedSequence = valueBytes.concat(complementBytes);
+
+  const hexString = combinedSequence
+    .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
+    .join(' ');
+
+  document.getElementById("decOutput").textContent = decimalValue;
+  document.getElementById("hexOutput").textContent = hexString;
+}
+
+window.onload = calculateBytes;
+</script>
+
+</body>
+</html>

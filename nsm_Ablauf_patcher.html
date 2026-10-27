@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Byte-Konverter & Bin-Patcher</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f7f6;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .container {
+      background: white;
+      padding: 45px;
+      border-radius: 12px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 650px;
+    }
+    h2 {
+      margin-top: 0;
+      color: #007BFF;
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    h2 + h2 {
+      color: #555;
+      font-size: 24px;
+      margin-bottom: 30px;
+    }
+    .form-group {
+      margin-bottom: 25px;
+    }
+    label {
+      display: block;
+      margin-bottom: 12px;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    input[type="date"], input[type="file"] {
+      width: 100%;
+      padding: 14px;
+      box-sizing: border-box;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      font-size: 18px;
+      font-family: inherit;
+      background-color: #fff;
+    }
+    .btn-group {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 10px;
+    }
+    button {
+      flex: 2;
+      padding: 18px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 20px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .btn-back {
+      flex: 1;
+      background-color: #6c757d;
+    }
+    .btn-back:hover {
+      background-color: #5a6268;
+    }
+    .output-box {
+      margin-top: 30px;
+      padding: 25px;
+      background-color: #e9ecef;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 18px;
+    }
+    .output-item {
+      margin-bottom: 15px;
+    }
+    .output-item:last-child {
+      margin-bottom: 0;
+    }
+    .highlight {
+      font-weight: bold;
+      color: #d63384;
+      font-size: 20px;
+    }
+    .status-msg {
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Laufzeit Berechnung NSM St25</h2>
+  <h2>Timekeeper "ST M48T18"</h2>
+  
+  <div class="form-group">
+    <label for="dateInput">Ablauf-Datum auswählen:</label>
+    <input type="date" id="dateInput" max="2099-12-31" value="2033-04-30">
+  </div>
+
+  <div class="form-group">
+    <label for="fileInput">Optional: .bin Datei zum Patchen hochladen:</label>
+    <input type="file" id="fileInput" accept=".bin">
+    <div id="statusOutput" class="status-msg"></div>
+  </div>
+  
+  <div class="btn-group">
+    <button class="btn-back" onclick="window.history.back();">⬅ Zurück</button>
+    <button onclick="processData()">Berechnen & Patchen</button>
+  </div>
+  
+  <div class="output-box">
+    <div class="output-item">Dezimalwert: <span id="decOutput" class="highlight">-</span></div>
+    <div class="output-item">Neue Byte-Sequenz: <span id="hexOutput" class="highlight">-</span></div>
+  </div>
+</div>
+
+<script>
+const today = new Date().toISOString().split('T')[0];
+document.getElementById("dateInput").setAttribute("min", today);
+
+// Globale Definition der alten Such-Sequenz als Byte-Array
+const searchBytes = [0xF8, 0xA4, 0x1D, 0x10, 0x07, 0x5B, 0xE2, 0xEF];
+
+function processData() {
+  const dateValue = document.getElementById("dateInput").value;
+  const fileInput = document.getElementById("fileInput");
+  const statusOutput = document.getElementById("statusOutput");
+  
+  statusOutput.textContent = "";
+  statusOutput.style.color = "initial";
+
+  if (!dateValue) {
+    alert("Bitte wähle ein gültiges Datum aus.");
+    return;
+  }
+
+  if (dateValue < today || dateValue > "2099-12-31") {
+    alert("Das Datum muss zwischen heute und dem 31.12.2099 liegen.");
+    return;
+  }
+
+  // Formatierung des Datums zu TTMMJJJJ
+  const parts = dateValue.split("-");
+  const formattedDateStr = parts[2] + parts[1] + parts[0]; 
+  const dateInt = parseInt(formattedDateStr);
+
+  // Formelberechnung
+  const decimalValue = dateInt * 9 - 65;
+
+  // Generierung der 8 neuen Bytes (4x Wert, 4x Komplement)
+  const byte0 = decimalValue & 0xFF;
+  const byte1 = (decimalValue >> 8) & 0xFF;
+  const byte2 = (decimalValue >> 16) & 0xFF;
+  const byte3 = (decimalValue >> 24) & 0xFF;
+  
+  const valueBytes = [byte0, byte1, byte2, byte3];
+  const complementBytes = valueBytes.map(b => (~b) & 0xFF);
+  const newBytes = valueBytes.concat(complementBytes);
+
+  // Hex-Anzeige aktualisieren
+  const hexString = newBytes
+    .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
+    .join(' ');
+
+  document.getElementById("decOutput").textContent = decimalValue;
+  document.getElementById("hexOutput").textContent = hexString;
+
+  // Falls eine Datei ausgewählt wurde, führen wir den Patch aus
+  if (fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+      const buffer = e.target.result;
+      const view = new Uint8Array(buffer);
+      let foundIndex = -1;
+
+      // Datei nach der alten Byte-Sequenz durchsuchen
+      for (let i = 0; i <= view.length - searchBytes.length; i++) {
+        let match = true;
+        for (let j = 0; j < searchBytes.length; j++) {
+          if (view[i + j] !== searchBytes[j]) {
+            match = false;
+            break;
+          }
+        }
+        if (match) {
+          foundIndex = i;
+          break; // Erste Fundstelle reicht
+        }
+      }
+
+      if (foundIndex === -1) {
+        statusOutput.textContent = "❌ Suchsequenz in Datei nicht gefunden!";
+        statusOutput.style.color = "red";
+        return;
+      }
+
+      // Bytes an der gefundenen Position mit den neuen Werten überschreiben
+      for (let j = 0; j < newBytes.length; j++) {
+        view[foundIndex + j] = newBytes[j];
+      }
+
+      // Neue Datei im Browser zum Download generieren
+      const blob = new Blob([view], { type: "application/octet-stream" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "patched_" + file.name;
+      link.click();
+
+      statusOutput.textContent = "✅ Datei erfolgreich gepatcht und heruntergeladen!";
+      statusOutput.style.color = "green";
+    };
+
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+// Initial beim Laden einmal berechnen
+window.onload = processData;
+</script>
+
+</body>
+</html>

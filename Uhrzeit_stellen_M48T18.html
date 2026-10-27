@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>8KB Timekeeper Uhrzeit-Steller (-1 Std)</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f7f6;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .container {
+      background: white;
+      padding: 45px;
+      border-radius: 12px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 650px;
+    }
+    h2 {
+      margin-top: 0;
+      color: #28a745;
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    h2 + h2 {
+      color: #555;
+      font-size: 24px;
+      margin-bottom: 30px;
+    }
+    .form-group {
+      margin-bottom: 25px;
+    }
+    label {
+      display: block;
+      margin-bottom: 12px;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    input[type="file"] {
+      width: 100%;
+      padding: 14px;
+      box-sizing: border-box;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      font-size: 18px;
+      font-family: inherit;
+      background-color: #fff;
+    }
+    .btn-group {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 10px;
+    }
+    button {
+      flex: 2;
+      padding: 18px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 20px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    .btn-back {
+      flex: 1;
+      background-color: #6c757d;
+    }
+    .btn-back:hover {
+      background-color: #5a6268;
+    }
+    .output-box {
+      margin-top: 30px;
+      padding: 25px;
+      background-color: #e9ecef;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 18px;
+    }
+    .output-item {
+      margin-bottom: 15px;
+    }
+    .output-item:last-child {
+      margin-bottom: 0;
+    }
+    .highlight {
+      font-weight: bold;
+      color: #d63384;
+      font-size: 20px;
+    }
+    .status-msg {
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Uhrzeit-Steller (-1 Std)</h2>
+  <h2>Timekeeper 8KB M48T18</h2>
+
+  <div class="form-group">
+    <label for="fileInput">8KB .bin Datei hochladen:</label>
+    <input type="file" id="fileInput" accept=".bin">
+    <div id="statusOutput" class="status-msg"></div>
+  </div>
+  
+  <div class="btn-group">
+    <button class="btn-back" onclick="window.history.back();">⬅ Zurück</button>
+    <button onclick="writeTimeOnly()">Uhrzeit stellen & Ausgeben</button>
+  </div>
+  
+  <div class="output-box">
+    <div class="output-item">Geschriebene Zeit-Bytes (Hex): <span id="timeOutput" class="highlight">-</span></div>
+  </div>
+</div>
+
+<script>
+// Hilfsfunktion zur BCD-Konvertierung
+function toBCD(val) {
+  return ((Math.floor(val / 10) << 4) | (val % 10)) & 0xFF;
+}
+
+function writeTimeOnly() {
+  const fileInput = document.getElementById("fileInput");
+  const statusOutput = document.getElementById("statusOutput");
+  
+  statusOutput.textContent = "";
+  statusOutput.style.color = "initial";
+
+  if (fileInput.files.length === 0) {
+    alert("Bitte wähle zuerst eine .bin Datei aus.");
+    return;
+  }
+
+  // 1. Aktuelle Uhrzeit abrufen und 1 Stunde abziehen
+  const now = new Date();
+  now.setHours(now.getHours() - 1); // Zieht exakt 1 Stunde ab (inkl. automatischem Datumsüberlauf)
+  
+  const yearBCD = toBCD(now.getFullYear() % 100);
+  const monthBCD = toBCD(now.getMonth() + 1);
+  const dayBCD = toBCD(now.getDate());
+  
+  // Wochentag-Korrektur: Montag=1, Dienstag=2, ..., Sonntag=7
+  let jsDay = now.getDay(); 
+  let dayOfWeek = jsDay === 0 ? 7 : jsDay; 
+  const dayOfWeekBCD = toBCD(dayOfWeek);
+  
+  const hoursBCD = toBCD(now.getHours());
+  const minutesBCD = toBCD(now.getMinutes());
+  
+  // Bit 7 im Sekundenregister ist das "Stop Bit" (ST). Muss 0 sein!
+  const secondsBCD = toBCD(now.getSeconds()) & 0x7F; 
+
+  // Registeranordnung für die LETZTEN 8 BYTES einer 8KB Datei (Offset: 0x1FF8 - 0x1FFF)
+  const clockBytes = [
+    0x00,          // 0x1FF8: Steuerregister (Normalbetrieb)
+    secondsBCD,    // 0x1FF9: Sekunden & ST-Bit (0)
+    minutesBCD,    // 0x1FFA: Minuten
+    hoursBCD,      // 0x1FFB: Stunden
+    dayOfWeekBCD,  // 0x1FFC: Wochentag
+    dayBCD,        // 0x1FFD: Tag
+    monthBCD,      // 0x1FFE: Monat
+    yearBCD        // 0x1FFF: Jahr
+  ];
+
+  const clockHexStr = clockBytes
+    .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
+    .join(' ');
+
+  // UI aktualisieren
+  document.getElementById("timeOutput").textContent = clockHexStr;
+
+  // 2. Datei einlesen, Uhrzeit am Ende überschreiben und ausgeben
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    const buffer = e.target.result;
+    const view = new Uint8Array(buffer);
+
+    // Ein Standard 8KB Timekeeper Dump hat exakt 8192 Bytes.
+    if (view.length !== 8192) {
+      if (!confirm(`Hinweis: Die Datei hat eine Größe von ${view.length} Bytes. Ein regulärer 8KB Dump hat exakt 8192 Bytes. Möchtest du trotzdem fortfahren?`)) {
+        return;
+      }
+    }
+
+    if (view.length >= 8) {
+      const timeStartIndex = view.length - 8; // Schreibt dynamisch an das absolute Ende (bei 8KB auf Index 8184)
+      for (let k = 0; k < 8; k++) {
+        view[timeStartIndex + k] = clockBytes[k];
+      }
+    } else {
+      statusOutput.textContent = "❌ Datei ist zu kurz (mindestens 8 Bytes erforderlich)!";
+      statusOutput.style.color = "red";
+      return;
+    }
+
+    // Datei direkt ausgeben / Download starten
+    const blob = new Blob([view], { type: "application/octet-stream" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "time_set_8kb_minus1h_" + file.name;
+    link.click();
+
+    statusOutput.textContent = "✅ Uhrzeit (-1 Std) erfolgreich in 8KB-Struktur injiziert und Datei ausgegeben!";
+    statusOutput.style.color = "green";
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+</script>
+
+</body>
+</html>

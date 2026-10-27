@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Byte-Datum-Konverter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        /* --- BILD-ANPASSUNG START --- */
+        .image-container {
+            max-width: 600px;
+            margin: 0 auto 20px auto;
+        }
+        .image-container img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            display: block; /* Verhindert unschöne Abstände unter dem Bild */
+        }
+        /* --- BILD-ANPASSUNG ENDE --- */
+
+        /* --- ZURÜCK BUTTON STYLING --- */
+        .back-button-container {
+            max-width: 600px;
+            margin: 0 auto 15px auto;
+        }
+        .btn-back {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: background-color 0.2s;
+        }
+        .btn-back:hover {
+            background-color: #5a6268;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #0056b3;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 8px;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 16px;
+        }
+        button {
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #004085;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+
+<div class="image-container">
+    <img src="HEX_Position.jpg" alt="Beschreibung des Bildes">
+</div>
+
+<!-- NEU: Zurück-Button Container -->
+<div class="back-button-container">
+    <button type="button" class="btn-back" onclick="history.back()">⬅ Zurück</button>
+</div>
+
+<div class="container">
+    <!-- DECODER SECTION -->
+    <div class="section">
+        <h2>🔓 Byte-Sequenz Decodieren</h2>
+        <label for="hexInput">Hex-Bytes eingeben (z.B. F8 A4 1D 10 07 5B E2 EF):</label>
+        <input type="text" id="hexInput" placeholder="F8 A4 1D 10 07 5B E2 EF">
+        <button onclick="decodeHex()">Decodieren</button>
+        <div id="decodeResult" class="result">Das Ergebnis wird hier angezeigt.</div>
+    </div>
+
+    <!-- ENCODER SECTION -->
+    <div class="section">
+        <h2>🔒 Datum Encodieren</h2>
+        <label for="dateInput">Zahl eingeben (Format DDMMYYYY, z.B. 30042033):</label>
+        <input type="text" id="dateInput" placeholder="30042033">
+        <button onclick="encodeDate()">Bytes generieren</button>
+        <div id="encodeResult" class="result">Die Bytes werden hier angezeigt.</div>
+    </div>
+</div>
+
+<script>
+    function decodeHex() {
+        const resultDiv = document.getElementById('decodeResult');
+        resultDiv.className = "result";
+        
+        let hexString = document.getElementById('hexInput').value.trim();
+        hexString = hexString.replace(/[\s,-]/g, '');
+
+        if (hexString.length !== 16) {
+            resultDiv.className = "result error";
+            resultDiv.innerText = "Fehler: Die Sequenz muss genau 8 Bytes (16 Hex-Zeichen) lang sein.";
+            return;
+        }
+
+        try {
+            const bytes = [];
+            for (let i = 0; i < 16; i += 2) {
+                bytes.push(parseInt(hexString.substr(i, 2), 16));
+            }
+
+            const valueBytes = bytes.slice(0, 4);
+            const complementBytes = bytes.slice(4, 8);
+
+            let isValid = true;
+            for (let i = 0; i < 4; i++) {
+                if (((~valueBytes[i]) & 0xFF) !== complementBytes[i]) {
+                    isValid = false;
+                }
+            }
+
+            const decimalValue = ((valueBytes[0]) | (valueBytes[1] << 8) | (valueBytes[2] << 16) | (valueBytes[3] << 24)) >>> 0;
+            const exactValue = (decimalValue + 65) / 9;
+            const dateInt = Math.floor(exactValue);
+            const rest = (decimalValue + 65) % 9;
+
+            let dateStr = dateInt.toString();
+            if (dateStr.length === 8) {
+                dateStr = `${dateStr.substring(0,2)}.${dateStr.substring(2,4)}.${dateStr.substring(4,8)}`;
+            } else if (dateStr.length === 7) {
+                dateStr = `0${dateStr.substring(0,1)}.${dateStr.substring(1,3)}.${dateStr.substring(3,7)}`;
+            }
+
+            let output = `Dezimalwert: ${decimalValue}\n`;
+            output += `Errechneter Wert (dateInt): ${dateInt}\n`;
+            output += `Formatierungs-Vorschlag: ${dateStr}\n`;
+            output += `Prüfsumme (Komplement): ${isValid ? '✅ Gültig' : '❌ Ungültig (Abweichung in Bytes 5-8)'}\n`;
+            if (rest !== 0) {
+                output += `Hinweis: Division hatte einen Rest von ${rest} (Wert ungenau).`;
+            }
+
+            resultDiv.innerText = output;
+
+        } catch (e) {
+            resultDiv.className = "result error";
+            resultDiv.innerText = "Fehler beim Verarbeiten der Hex-Bytes.";
+        }
+    }
+
+    function encodeDate() {
+        const resultDiv = document.getElementById('encodeResult');
+        resultDiv.className = "result";
+
+        const dateStr = document.getElementById('dateInput').value.trim();
+        const dateInt = parseInt(dateStr, 10);
+
+        if (isNaN(dateInt)) {
+            resultDiv.className = "result error";
+            resultDiv.innerText = "Fehler: Bitte eine gültige Zahl eingeben.";
+            return;
+        }
+
+        const decimalValue = (dateInt * 9) - 65;
+
+        const byte0 = decimalValue & 0xFF;
+        const byte1 = (decimalValue >> 8) & 0xFF;
+        const byte2 = (decimalValue >> 16) & 0xFF;
+        const byte3 = (decimalValue >> 24) & 0xFF;
+
+        const valueBytes = [byte0, byte1, byte2, byte3];
+        const complementBytes = valueBytes.map(b => (~b) & 0xFF);
+        const newBytes = valueBytes.concat(complementBytes);
+
+        const hexResult = newBytes.map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+
+        let output = `Berechneter Dezimalwert: ${decimalValue}\n`;
+        output += `Generierte Hex-Bytes:\n👉 ${hexResult}`;
+
+        resultDiv.innerText = output;
+    }
+</script>
+
+</body>
+</html>
