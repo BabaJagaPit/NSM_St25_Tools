@@ -87,38 +87,10 @@
       </div>
     </div>
 
-    <!-- Text-Besucherzähler im Footer -->
-    <footer class="text-center mt-5 pt-4 border-top">
-      <p class="text-muted small mb-1">Seitenaufrufe</p>
-      <div class="badge bg-secondary fs-6" id="counter-value">...</div>
-    </footer>
-  </main>
+    <img src="https://seeyoufarm.com" alt="Aufrufe"/>
 
-  <!-- Modernes API-Skript für die Live-Zählung -->
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const counterElement = document.getElementById("counter-value");
-      
-      // Nutzt den verlässlichen, datenschutzkonformen Count-API Service
-      fetch('https://mileshilliard.com')
-        .then(response => {
-          if (!response.ok) throw new Error('Netzwerk-Fehler');
-          return response.json();
-        })
-        .then(data => {
-          if (data && data.value) {
-            // Formatiert die Zahl schön mit Tausendertrennzeichen (z.B. 1.250)
-            counterElement.innerText = Number(data.value).toLocaleString('de-DE');
-          } else {
-            counterElement.innerText = "1";
-          }
-        })
-        .catch(error => {
-          console.error('Fehler beim Laden des Zählers:', error);
-          counterElement.style.display = 'none'; // Versteckt den Badge, falls die API offline ist
-        });
-    });
-  </script>
+
+ 
 </body>
 
 </html>
