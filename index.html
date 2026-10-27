@@ -18,7 +18,7 @@
   <meta name="twitter:title" content="Automatenblödsinn - Spielautomaten Tools">
   <meta name="twitter:description"
     content="Kostenlose Web-Tools für deutsche Spielautomaten (ADP/Merkur, NSM).">
-  <meta name="twitter:image" content="https://github.io">
+  <meta name="twitter:image" content="https://github.ioimg/steuereinheit.jpg">
   <meta name="google-site-verification" content="IzbHjnR0qgPkDDu6yosj-SnzfsBU_xBOhXrmEKRfVMM" />
   <link rel="canonical" href="https://github.io" />
   <link rel="stylesheet" href="style.css">
@@ -74,15 +74,37 @@
       </div>
     </div>
 
-    <!-- Neuer, Cache-sicherer Besucherzähler im Footer -->
+    <!-- 100% funktionierender JavaScript-Besucherzähler im Footer -->
     <footer class="text-center mt-5 pt-4 border-top">
       <p class="text-muted small mb-2">Seitenaufrufe</p>
-      <img src="https://glitch.me" alt="Besucherzähler">
+      <div id="visitor-counter">
+        <span class="text-muted small">Wird geladen...</span>
+      </div>
     </footer>
   </main>
+
+  <!-- Script zur Cache-Umgehung -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const container = document.getElementById("visitor-counter");
+      // Ein einzigartiger Zeitstempel zwingt den Browser, das Bild JEDES Mal frisch abzurufen
+      const cacheBuster = new Date().getTime();
+      const counterUrl = `https://glitch.me{cacheBuster}`;
+      
+      // Erstellt das Bild dynamisch per JavaScript
+      const img = new Image();
+      img.src = counterUrl;
+      img.alt = "Besucherzähler";
+      img.onload = function() {
+        container.innerHTML = "";
+        container.appendChild(img);
+      };
+    });
+  </script>
 </body>
 
 </html>
+
 
 
 
