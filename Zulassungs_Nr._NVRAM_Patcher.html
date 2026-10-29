@@ -16,7 +16,26 @@
             background: white;
             border-radius: 8px;
         }
-        h2 { color: #2c3e50; border-bottom: 2px solid #2ecc71; padding-bottom: 10px; }
+        h2 { color: #2c3e50; border-bottom: 2px solid #2ecc71; padding-bottom: 10px; margin-bottom: 15px; }
+        
+        /* Styling für den neuen Zurück-Button */
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            background: #e0e0e0;
+            color: #333;
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            transition: 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-back:hover { background: #d5d5d5; }
+        
         .box { background: #f8f9fa; border: 1px dashed #ccc; padding: 20px; text-align: center; border-radius: 6px; margin: 20px 0; }
         .input-group { margin: 15px 0 25px 0; text-align: left; }
         label { display: block; margin-bottom: 5px; font-weight: bold; color: #2c3e50; }
@@ -33,6 +52,10 @@
 <body>
 
     <h2>🎰 Zulassungs Nr. NVRAM Patcher</h2>
+    
+    <!-- Zurück-Button mit integrierter JavaScript-Historie -->
+    <button class="btn-back" onclick="window.history.back();">⬅ Zurück</button>
+
     <p>Gib deine gewünschte Nummer ein und lade anschließend die 8-KB-Datei hoch.</p>
     
     <div class="input-group">
@@ -120,7 +143,6 @@
                 link.click();
                 document.body.removeChild(link);
             };
-
 
             reader.readAsArrayBuffer(file);
         });
