@@ -45,7 +45,7 @@
       font-weight: bold;
       font-size: 18px;
     }
-    input[type="file"] {
+    input[type="file"], input[type="datetime-local"] {
       width: 100%;
       padding: 14px;
       box-sizing: border-box;
@@ -54,6 +54,9 @@
       font-size: 18px;
       font-family: inherit;
       background-color: #fff;
+    }
+    input[type="datetime-local"] {
+      cursor: pointer;
     }
     .btn-group {
       display: flex;
@@ -116,6 +119,11 @@
   <div class="form-group">
     <label for="fileInput">8KB .bin Datei hochladen:</label>
     <input type="file" id="fileInput" accept=".bin">
+  </div>
+
+  <div class="form-group">
+    <label for="timeInput">Gewünschte Zeit (Editierbar):</label>
+    <input type="datetime-local" id="timeInput" step="1">
     <div id="statusOutput" class="status-msg"></div>
   </div>
   
@@ -130,6 +138,16 @@
 </div>
 
 <script>
+// Vorbefüllung beim Laden der Seite: Aktuelle Zeit minus 1 Stunde
+window.addEventListener('DOMContentLoaded', () => {
+  const now = new Date();
+  now.setHours(now.getHours() - 1); // Zieht direkt 1 Stunde ab (berücksichtigt Datumswechsel)
+  
+  const offset = now.getTimezoneOffset() * 60000;
+  const localISOTime = (new Date(now - offset)).toISOString().slice(0, 19);
+  document.getElementById('timeInput').value = localISOTime;
+});
+
 // Hilfsfunktion zur BCD-Konvertierung
 function toBCD(val) {
   return ((Math.floor(val / 10) << 4) | (val % 10)) & 0xFF;
@@ -137,6 +155,7 @@ function toBCD(val) {
 
 function writeTimeOnly() {
   const fileInput = document.getElementById("fileInput");
+  const timeInput = document.getElementById("timeInput");
   const statusOutput = document.getElementById("statusOutput");
   
   statusOutput.textContent = "";
@@ -147,24 +166,28 @@ function writeTimeOnly() {
     return;
   }
 
-  // 1. Aktuelle Uhrzeit abrufen und 1 Stunde abziehen
-  const now = new Date();
-  now.setHours(now.getHours() - 1); // Zieht exakt 1 Stunde ab (inkl. automatischem Datumsüberlauf)
+  if (!timeInput.value) {
+    alert("Bitte wähle ein gültiges Datum und eine Uhrzeit aus.");
+    return;
+  }
+
+  // 1. Datum und Uhrzeit aus dem editierbaren Feld auslesen
+  const userDate = new Date(timeInput.value);
   
-  const yearBCD = toBCD(now.getFullYear() % 100);
-  const monthBCD = toBCD(now.getMonth() + 1);
-  const dayBCD = toBCD(now.getDate());
+  const yearBCD = toBCD(userDate.getFullYear() % 100);
+  const monthBCD = toBCD(userDate.getMonth() + 1);
+  const dayBCD = toBCD(userDate.getDate());
   
   // Wochentag-Korrektur: Montag=1, Dienstag=2, ..., Sonntag=7
-  let jsDay = now.getDay(); 
+  let jsDay = userDate.getDay(); 
   let dayOfWeek = jsDay === 0 ? 7 : jsDay; 
   const dayOfWeekBCD = toBCD(dayOfWeek);
   
-  const hoursBCD = toBCD(now.getHours());
-  const minutesBCD = toBCD(now.getMinutes());
+  const hoursBCD = toBCD(userDate.getHours());
+  const minutesBCD = toBCD(userDate.getMinutes());
   
   // Bit 7 im Sekundenregister ist das "Stop Bit" (ST). Muss 0 sein!
-  const secondsBCD = toBCD(now.getSeconds()) & 0x7F; 
+  const secondsBCD = toBCD(userDate.getSeconds()) & 0x7F; 
 
   // Registeranordnung für die LETZTEN 8 BYTES einer 8KB Datei (Offset: 0x1FF8 - 0x1FFF)
   const clockBytes = [
@@ -218,7 +241,7 @@ function writeTimeOnly() {
     link.download = "time_set_8kb_minus1h_" + file.name;
     link.click();
 
-    statusOutput.textContent = "✅ Uhrzeit (-1 Std) erfolgreich in 8KB-Struktur injiziert und Datei ausgegeben!";
+    statusOutput.textContent = "✅ Uhrzeit erfolgreich in 8KB-Struktur injiziert und Datei ausgegeben!";
     statusOutput.style.color = "green";
   };
 
@@ -228,3 +251,4 @@ function writeTimeOnly() {
 
 </body>
 </html>
+
