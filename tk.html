@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>M48T18 Timekeeper Uhrzeit-Steller</title>
   <style>
@@ -45,7 +44,7 @@
       font-weight: bold;
       font-size: 18px;
     }
-    input[type="file"] {
+    input[type="file"], input[type="datetime-local"] {
       width: 100%;
       padding: 14px;
       box-sizing: border-box;
@@ -54,6 +53,9 @@
       font-size: 18px;
       font-family: inherit;
       background-color: #fff;
+    }
+    input[type="datetime-local"] {
+      cursor: pointer;
     }
     .btn-group {
       display: flex;
@@ -116,6 +118,11 @@
   <div class="form-group">
     <label for="fileInput">.bin Datei hochladen:</label>
     <input type="file" id="fileInput" accept=".bin">
+  </div>
+
+  <div class="form-group">
+    <label for="timeInput">Gewünschte Zeit (Editierbar):</label>
+    <input type="datetime-local" id="timeInput" step="1">
     <div id="statusOutput" class="status-msg"></div>
   </div>
   
@@ -130,6 +137,15 @@
 </div>
 
 <script>
+// Vorauszahlung des aktuellen Datums und Uhrzeit beim Laden der Seite
+window.addEventListener('DOMContentLoaded', () => {
+  const now = new Date();
+  // Lokale Zeit formatiert für datetime-local (YYYY-MM-DDTHH:mm:ss)
+  const offset = now.getTimezoneOffset() * 60000;
+  const localISOTime = (new Date(now - offset)).toISOString().slice(0, 19);
+  document.getElementById('timeInput').value = localISOTime;
+});
+
 // Hilfsfunktion zur BCD-Konvertierung
 function toBCD(val) {
   return ((Math.floor(val / 10) << 4) | (val % 10)) & 0xFF;
@@ -137,6 +153,7 @@ function toBCD(val) {
 
 function writeTimeOnly() {
   const fileInput = document.getElementById("fileInput");
+  const timeInput = document.getElementById("timeInput");
   const statusOutput = document.getElementById("statusOutput");
   
   statusOutput.textContent = "";
@@ -147,21 +164,26 @@ function writeTimeOnly() {
     return;
   }
 
-  // 1. Berechnung der aktuellen Uhrzeit (BCD)
-  const now = new Date();
+  if (!timeInput.value) {
+    alert("Bitte wähle ein gültiges Datum und eine Uhrzeit aus.");
+    return;
+  }
+
+  // 1. Berechnung der gewählten Uhrzeit (BCD)
+  const userDate = new Date(timeInput.value);
   
-  const yearBCD = toBCD(now.getFullYear() % 100);
-  const monthBCD = toBCD(now.getMonth() + 1);
-  const dayBCD = toBCD(now.getDate());
+  const yearBCD = toBCD(userDate.getFullYear() % 100);
+  const monthBCD = toBCD(userDate.getMonth() + 1);
+  const dayBCD = toBCD(userDate.getDate());
   
-  // Wochentag-Korrektur: Montag=1, Dienstag=2, ..., Sonntag=7
-  let jsDay = now.getDay(); 
+  // Wochentag-Korrektur basierend auf dem gewählten Datum: Montag=1, ..., Sonntag=7
+  let jsDay = userDate.getDay(); 
   let dayOfWeek = jsDay === 0 ? 7 : jsDay; 
   const dayOfWeekBCD = toBCD(dayOfWeek);
   
-  const hoursBCD = toBCD(now.getHours());
-  const minutesBCD = toBCD(now.getMinutes());
-  const secondsBCD = toBCD(now.getSeconds());
+  const hoursBCD = toBCD(userDate.getHours());
+  const minutesBCD = toBCD(userDate.getMinutes());
+  const secondsBCD = toBCD(userDate.getSeconds());
 
   // Registeranordnung M48T18 (Letzte 8 Bytes im RAM)
   const clockBytes = [
@@ -209,7 +231,7 @@ function writeTimeOnly() {
     link.download = "time_set_" + file.name;
     link.click();
 
-    statusOutput.textContent = "✅ Aktuelle Uhrzeit gesetzt und Datei wird ausgegeben!";
+    statusOutput.textContent = "✅ Gewählte Uhrzeit gesetzt und Datei wird ausgegeben!";
     statusOutput.style.color = "green";
   };
 
@@ -219,5 +241,6 @@ function writeTimeOnly() {
 
 </body>
 </html>
+
 
 
