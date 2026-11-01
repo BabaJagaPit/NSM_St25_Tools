@@ -7,7 +7,13 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f4f7f6;
+      /* --- HINTERGRUNDBILD AKTIVIERT --- */
+      background-image: url('hinterg.jpg'); 
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-attachment: fixed;
+      /* ---------------------------------- */
       color: #333;
       display: flex;
       justify-content: center;
@@ -18,10 +24,10 @@
       box-sizing: border-box;
     }
     .container {
-      background: white;
+      background: rgba(255, 255, 255, 0.95); /* Leicht transparent, damit das Bild durchschimmert */
       padding: 45px;
       border-radius: 12px;
-      box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+      box-shadow: 0 6px 25px rgba(0,0,0,0.2);
       width: 100%;
       max-width: 650px;
     }
@@ -120,7 +126,6 @@
   
   <div class="form-group">
     <label for="dateInput">Ablauf-Datum auswählen:</label>
-    <!-- max ist fest auf 31.12.2099 eingestellt. min wird per JavaScript dynamisch auf heute gesetzt -->
     <input type="date" id="dateInput" max="2099-12-31" value="2033-04-30">
   </div>
   
@@ -140,7 +145,7 @@
 </div>
 
 <script>
-// Dynamisch das aktuelle Datum als Mindestdatum im Kalender setzen
+// Aktuelles Datum sauber auslesen (Format: YYYY-MM-DD)
 const today = new Date().toISOString().split('T')[0];
 document.getElementById("dateInput").setAttribute("min", today);
 
@@ -148,20 +153,18 @@ function calculateBytes() {
   const dateInputElement = document.getElementById("dateInput");
   const dateValue = dateInputElement.value;
   
-  // 1. Validierung: Prüfen ob überhaupt ein Datum eingetragen ist
   if (!dateValue) {
     alert("Bitte wähle ein gültiges Datum aus.");
     return;
   }
 
-  // 2. Validierung: Prüfen ob das Datum im erlaubten Bereich liegt (z.B. bei manueller Tastatureingabe)
   const maxDate = "2099-12-31";
   if (dateValue < today || dateValue > maxDate) {
     alert("Das Datum muss zwischen heute und dem 31.12.2099 liegen.");
     return;
   }
 
-  // Das Eingabefeld liefert "JJJJ-MM-TT". Wir zerlegen es und bauen "TTMMJJJJ" daraus.
+  // Datumsteile zerlegen ("JJJJ-MM-TT") und richtig zu "TTMMJJJJ" zusammensetzen
   const parts = dateValue.split("-");
   const formattedDateStr = parts[2] + parts[1] + parts[0]; 
   const dateInt = parseInt(formattedDateStr);
@@ -185,6 +188,7 @@ function calculateBytes() {
   document.getElementById("hexOutput").textContent = hexString;
 }
 
+// Skript direkt beim Laden einmal ausführen
 window.onload = calculateBytes;
 </script>
 

@@ -6,63 +6,94 @@
     <title>Zulassungsnummer ändern - Anleitung</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            line-height: 1.6;
-            background-color: #f9f9f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* --- HINTERGRUNDBILD EINGEBAUT --- */
+            background-image: url('hinterg.jpg'); 
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-attachment: fixed;
+            /* ---------------------------------- */
             color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
         }
         .content {
-            max-width: 800px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 750px;
+            background: rgba(255, 255, 255, 0.95); /* Leicht transparent für einheitlichen Look */
+            padding: 45px;
+            border-radius: 12px;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.2);
+            box-sizing: border-box;
+            line-height: 1.6;
         }
         .back-button {
-            padding: 10px 20px;
-            font-size: 15px;
-            background-color: #007bff;
+            background-color: #6c757d;
             color: white;
             border: none;
-            border-radius: 4px;
+            padding: 12px 24px;
+            border-radius: 6px;
             cursor: pointer;
-            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 25px;
+            transition: background-color 0.2s;
         }
         .back-button:hover {
-            background-color: #0056b3;
+            background-color: #5a6268;
         }
         h1 {
             color: #111;
-            font-size: 24px;
+            font-size: 26px;
             border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
+            padding-bottom: 12px;
+            margin-top: 0;
+            margin-bottom: 25px;
         }
         .highlight {
             background-color: #fff3cd;
-            padding: 2px 5px;
+            padding: 2px 6px;
             border-radius: 4px;
             font-weight: bold;
+            color: #856404;
         }
         .image-container {
             margin: 30px 0;
             text-align: center;
             border: 2px dashed #ccc;
             padding: 20px;
-            background-color: #fafafa;
+            background-color: rgba(250, 250, 250, 0.8);
+            border-radius: 6px;
         }
         .image-container img {
             max-width: 100%;
             height: auto;
             border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
-        .image-label {
-            display: block;
-            margin-top: 10px;
-            font-size: 14px;
-            color: #666;
-            font-style: italic;
+        p {
+            font-size: 17px;
+            margin-bottom: 20px;
+        }
+        p strong {
+            color: #dc3545;
+        }
+        code {
+            font-family: monospace;
+            background-color: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -70,7 +101,7 @@
 
     <div class="content">
         <!-- Zurück-Button -->
-        <button class="back-button" onclick="history.back()">← Zurück</button>
+        <button class="back-button" onclick="history.back()">⬅ Zurück</button>
 
         <!-- Hauptüberschrift -->
         <h1>Zulassungsnummer ändern auf Original ST25 NSM (In Scheibe eingeprägt)</h1>
@@ -82,9 +113,7 @@
 
         <!-- Position für das Bild (Gelber Bereich) -->
         <div class="image-container">
-            <!-- Ersetze 'image001.jpg' mit deinem echten Bildpfad -->
             <img src="image001.jpg" alt="Gelb gekennzeichneter Bereich im Image">
-            
         </div>
 
         <p>Jetzt steht die Zulassungsnummer auf <code>000000000</code>. Spielmodul stecken und über ST25 Tastatur die Original Zulassungsnummer (In Scheibe eingeprägt) eingeben.</p>

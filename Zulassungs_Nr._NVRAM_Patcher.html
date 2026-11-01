@@ -7,56 +7,143 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
+            /* --- HINTERGRUNDBILD EINGEBAUT --- */
+            background-image: url('hinterg.jpg'); 
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-attachment: fixed;
+            /* ---------------------------------- */
             color: #333;
-            max-width: 600px;
-            margin: 40px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
             padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            background: white;
-            border-radius: 8px;
+            box-sizing: border-box;
         }
-        h2 { color: #2c3e50; border-bottom: 2px solid #2ecc71; padding-bottom: 10px; margin-bottom: 15px; }
         
-        /* Styling für den neuen Zurück-Button */
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: rgba(255, 255, 255, 0.95); /* Leicht transparent für einheitlichen Look */
+            padding: 45px;
+            border-radius: 12px;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.2);
+            box-sizing: border-box;
+        }
+
+        h2 { 
+            color: #2c3e50; 
+            border-bottom: 2px solid #2ecc71; 
+            padding-bottom: 12px; 
+            margin-top: 0;
+            margin-bottom: 25px; 
+            font-size: 32px;
+        }
+        
+        /* Styling für den Zurück-Button */
         .btn-back {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
             display: inline-flex;
             align-items: center;
-            background: #e0e0e0;
-            color: #333;
-            padding: 6px 12px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-size: 0.9em;
-            font-weight: bold;
-            margin-bottom: 20px;
-            transition: 0.2s;
-            border: none;
-            cursor: pointer;
+            gap: 5px;
+            margin-bottom: 25px;
+            transition: background-color 0.2s;
         }
-        .btn-back:hover { background: #d5d5d5; }
+        .btn-back:hover { 
+            background-color: #5a6268; 
+        }
         
-        .box { background: #f8f9fa; border: 1px dashed #ccc; padding: 20px; text-align: center; border-radius: 6px; margin: 20px 0; }
-        .input-group { margin: 15px 0 25px 0; text-align: left; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #2c3e50; }
-        input[type="number"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; box-sizing: border-box; }
-        input[type="file"] { display: none; }
-        .btn { display: inline-block; padding: 12px 24px; background: #2ecc71; color: white; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; margin-top: 10px; }
-        .btn:hover { background: #27ae60; }
-        #status { margin-top: 15px; font-weight: bold; }
+        .box { 
+            background: rgba(248, 249, 250, 0.8); 
+            border: 2px dashed #ccc; 
+            padding: 25px; 
+            text-align: center; 
+            border-radius: 6px; 
+            margin: 25px 0; 
+        }
+        
+        .input-group { 
+            margin: 15px 0 25px 0; 
+            text-align: left; 
+        }
+        
+        label { 
+            display: block; 
+            margin-bottom: 12px; 
+            font-weight: bold; 
+            color: #2c3e50; 
+            font-size: 18px;
+        }
+        
+        input[type="number"] { 
+            width: 100%; 
+            padding: 14px; 
+            border: 2px solid #ccc; 
+            border-radius: 6px; 
+            font-size: 18px; 
+            font-family: inherit;
+            box-sizing: border-box; 
+        }
+        
+        input[type="file"] { 
+            display: none; 
+        }
+        
+        .btn { 
+            display: inline-block; 
+            padding: 16px 32px; 
+            background: #2ecc71; 
+            color: white; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 18px;
+            transition: 0.2s; 
+            margin-top: 10px; 
+        }
+        .btn:hover { 
+            background: #27ae60; 
+        }
+        
+        #status { 
+            margin-top: 20px; 
+            font-weight: bold; 
+            font-size: 16px;
+        }
+        
         .success { color: #27ae60; }
         .error { color: #c0392b; }
-        .info { font-size: 0.9em; color: #666; text-align: left; background: #eee; padding: 10px; border-radius: 4px; }
+        
+        .info { 
+            font-size: 0.95em; 
+            color: #555; 
+            text-align: left; 
+            background: #e9ecef; 
+            padding: 15px; 
+            border-radius: 6px; 
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
 
+<div class="container">
     <h2>🎰 Zulassungs Nr. NVRAM Patcher</h2>
     
-    <!-- Zurück-Button mit integrierter JavaScript-Historie -->
+    <!-- Zurück-Button -->
     <button class="btn-back" onclick="window.history.back();">⬅ Zurück</button>
 
-    <p>Gib deine gewünschte Nummer ein und lade anschließend die 8-KB-Datei hoch.</p>
+    <p style="font-size: 17px;">Gib deine gewünschte Nummer ein und lade anschließend die 8-KB-Datei hoch.</p>
     
     <div class="input-group">
         <label for="numInput">Neue Zulassungs- / Gerätenummer:</label>
@@ -74,78 +161,79 @@
         • Ziel-Offset: Byte 8166 (0x1FE6)<br>
         • Format: 32-Bit Unsigned Integer (Little-Endian)
     </div>
+</div>
 
-    <script>
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            const statusDiv = document.getElementById('status');
-            const numInput = document.getElementById('numInput');
+<script>
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const statusDiv = document.getElementById('status');
+        const numInput = document.getElementById('numInput');
+        
+        if (!file) return;
+
+        // Strict-Check auf exakte 8 KB Dateigröße
+        if (file.size !== 8192) {
+            statusDiv.className = 'error';
+            statusDiv.innerText = `Fehler: Datei muss exakt 8192 Bytes groß sein (Deine Datei: ${file.size} Bytes).`;
+            return;
+        }
+
+        // Eingabewert validieren
+        const targetNumber = parseInt(numInput.value, 10);
+        if (isNaN(targetNumber) || targetNumber < 0 || targetNumber > 4294967295) {
+            statusDiv.className = 'error';
+            statusDiv.innerText = "Fehler: Bitte gib eine gültige Zahl zwischen 0 und 4294967295 ein.";
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const buffer = event.target.result;
+            const view = new Uint8Array(buffer);
+
+            // Das feste Ziel-Offset (26 Bytes vor dem Dateiende)
+            const targetOffset = 8192 - 26; // Index 8166 / 0x1FE6
+
+            // Umrechnung der Dezimalzahl in 4 Bytes (Little-Endian)
+            const byte0 = targetNumber & 0xFF;
+            const byte1 = (targetNumber >> 8) & 0xFF;
+            const byte2 = (targetNumber >> 16) & 0xFF;
+            const byte3 = (targetNumber >> 24) & 0xFF;
+
+            // Alten Wert auslesen für die Anzeige
+            let altHex = "";
+            for(let h=0; h<4; h++) {
+                altHex += view[targetOffset + h].toString(16).toUpperCase().padStart(2, '0') + " ";
+            }
+
+            // Werte blind an der Adresse überschreiben
+            view[targetOffset]     = byte0;
+            view[targetOffset + 1] = byte1;
+            view[targetOffset + 2] = byte2;
+            view[targetOffset + 3] = byte3;
+
+            // Neuen Hex-Wert für die Anzeige generieren
+            const neuHex = `${byte0.toString(16).toUpperCase().padStart(2, '0')} ${byte1.toString(16).toUpperCase().padStart(2, '0')} ${byte2.toString(16).toUpperCase().padStart(2, '0')} ${byte3.toString(16).toUpperCase().padStart(2, '0')}`;
+
+            // Erfolg melden und Download starten
+            statusDiv.className = 'success';
+            statusDiv.innerText = `Erfolgreich! Alter Hex-Wert (${altHex.trim()}) wurde durch ${targetNumber} (Hex: ${neuHex}) ersetzt.`;
             
-            if (!file) return;
+            // Datei-Download triggern
+            const blob = new Blob([view], {type: "application/octet-stream"});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            
+            let alterName = file.name.substring(0, file.name.lastIndexOf('.'));
+            link.download = `${alterName}_patched_${targetNumber}.bin`;
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
 
-            // Strict-Check auf exakte 8 KB Dateigröße
-            if (file.size !== 8192) {
-                statusDiv.className = 'error';
-                statusDiv.innerText = `Fehler: Datei muss exakt 8192 Bytes groß sein (Deine Datei: ${file.size} Bytes).`;
-                return;
-            }
-
-            // Eingabewert validieren
-            const targetNumber = parseInt(numInput.value, 10);
-            if (isNaN(targetNumber) || targetNumber < 0 || targetNumber > 4294967295) {
-                statusDiv.className = 'error';
-                statusDiv.innerText = "Fehler: Bitte gib eine gültige Zahl zwischen 0 und 4294967295 ein.";
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const buffer = event.target.result;
-                const view = new Uint8Array(buffer);
-
-                // Das feste Ziel-Offset (26 Bytes vor dem Dateiende)
-                const targetOffset = 8192 - 26; // Index 8166 / 0x1FE6
-
-                // Umrechnung der Dezimalzahl in 4 Bytes (Little-Endian)
-                const byte0 = targetNumber & 0xFF;
-                const byte1 = (targetNumber >> 8) & 0xFF;
-                const byte2 = (targetNumber >> 16) & 0xFF;
-                const byte3 = (targetNumber >> 24) & 0xFF;
-
-                // Alten Wert auslesen für die Anzeige
-                let altHex = "";
-                for(let h=0; h<4; h++) {
-                    altHex += view[targetOffset + h].toString(16).toUpperCase().padStart(2, '0') + " ";
-                }
-
-                // Werte blind an der Adresse überschreiben
-                view[targetOffset]     = byte0;
-                view[targetOffset + 1] = byte1;
-                view[targetOffset + 2] = byte2;
-                view[targetOffset + 3] = byte3;
-
-                // Neuen Hex-Wert für die Anzeige generieren
-                const neuHex = `${byte0.toString(16).toUpperCase().padStart(2, '0')} ${byte1.toString(16).toUpperCase().padStart(2, '0')} ${byte2.toString(16).toUpperCase().padStart(2, '0')} ${byte3.toString(16).toUpperCase().padStart(2, '0')}`;
-
-                // Erfolg melden und Download starten
-                statusDiv.className = 'success';
-                statusDiv.innerText = `Erfolgreich! Alter Hex-Wert (${altHex.trim()}) wurde durch ${targetNumber} (Hex: ${neuHex}) ersetzt.`;
-                
-                // Datei-Download triggern
-                const blob = new Blob([view], {type: "application/octet-stream"});
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                
-                let alterName = file.name.substring(0, file.name.lastIndexOf('.'));
-                link.download = `${alterName}_patched_${targetNumber}.bin`;
-                
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            };
-
-            reader.readAsArrayBuffer(file);
-        });
-    </script>
+        reader.readAsArrayBuffer(file);
+    });
+</script>
 </body>
 </html>
