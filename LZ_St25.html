@@ -51,7 +51,7 @@
       font-weight: bold;
       font-size: 20px;
     }
-    input[type="date"] {
+    input[type="date"], input[type="file"] {
       width: 100%;
       padding: 16px;
       box-sizing: border-box;
@@ -59,6 +59,11 @@
       border-radius: 6px;
       font-size: 22px;
       font-family: inherit;
+    }
+    input[type="file"] {
+      background: #fff;
+      cursor: pointer;
+      font-size: 18px;
     }
     .btn-group {
       display: flex;
@@ -105,6 +110,11 @@
       color: #d63384;
       font-size: 20px;
     }
+    .game-highlight {
+      font-weight: bold;
+      color: #28a745;
+      font-size: 20px;
+    }
     .image-container {
       margin-top: 35px;
       text-align: center;
@@ -125,6 +135,11 @@
   <h2>Timekeeper "ST M48T18"</h2>
   
   <div class="form-group">
+    <label for="fileInput">Originale .bin Datei einlesen:</label>
+    <input type="file" id="fileInput" accept=".bin,.rom,.dat">
+  </div>
+
+  <div class="form-group">
     <label for="dateInput">Ablauf-Datum auswählen:</label>
     <input type="date" id="dateInput" max="2099-12-31" value="2033-04-30">
   </div>
@@ -135,6 +150,8 @@
   </div>
   
   <div class="output-box">
+    <div class="output-item">Spielname (Offset 0x01F20): <span id="gameOutput1" class="game-highlight">-</span></div>
+    <div class="output-item">Spielname (Offset 0x01F68): <span id="gameOutput2" class="game-highlight">-</span></div>
     <div class="output-item">Dezimalwert: <span id="decOutput" class="highlight">-</span></div>
     <div class="output-item">Byte-Sequenz: <span id="hexOutput" class="highlight">-</span></div>
   </div>
@@ -149,6 +166,79 @@
 const today = new Date().toISOString().split('T')[0];
 document.getElementById("dateInput").setAttribute("min", today);
 
+// Hilfsfunktion: Extrahiert saubere Textzeichen aus Binärdaten
+function readAsciiFromBin(uint8Array, startOffset, length) {
+  let text = "";
+  const end = Math.min(startOffset + length, uint8Array.length);
+  for (let i = startOffset; i < end; i++) {
+    const code = uint8Array[i];
+    if (code >= 32 && code <= 126) {
+      text += String.fromCharCode(code);
+    } else {
+      text += " ";
+    }
+  }
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+// Event-Listener reagiert sofort beim Laden einer Datei
+document.getElementById('fileInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    const buffer = event.target.result;
+    const uint8Array = new Uint8Array(buffer);
+    
+    // Basis-Offset aus deiner Rückmeldung
+    const offsetBase = 0x01F20; 
+
+    // 1. Beide Namen aus den verifizierten Offsets ausgeben
+    const name1 = readAsciiFromBin(uint8Array, offsetBase, 24);
+    document.getElementById("gameOutput1").textContent = name1 || "Leer / Nicht lesbar";
+
+    const name2 = readAsciiFromBin(uint8Array, offsetBase + 0x48, 24);
+    document.getElementById("gameOutput2").textContent = name2 || "Leer / Nicht lesbar";
+
+    // 2. Laufzeit-Bytes am berechneten Versatz-Punkt auslesen (0x01F20 + 190)
+    const dateOffset = offsetBase + 190; 
+    
+    if (uint8Array.length >= dateOffset + 8) {
+      const b0 = uint8Array[dateOffset];
+      const b1 = uint8Array[dateOffset + 1];
+      const b2 = uint8Array[dateOffset + 2];
+      const b3 = uint8Array[dateOffset + 3];
+      
+      // Little-Endian 32-Bit Integer rekonstruieren
+      const decimalValue = (b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)) >>> 0;
+      
+      // Formel umkehren: dateInt = (decimalValue + 65) / 9
+      const dateInt = (decimalValue + 65) / 9;
+      const dateStr = Math.round(dateInt).toString().padStart(8, '0'); // Format: TTMMJJJJ
+      
+      const day = dateStr.substring(0, 2);
+      const month = dateStr.substring(2, 4);
+      const year = dateStr.substring(4, 8);
+      
+      // Plausibilitätsprüfung für das ausgelesene Datum
+      if (!isNaN(dateInt) && dateInt > 0 && parseInt(year) >= 1990) {
+        document.getElementById("dateInput").value = `${year}-${month}-${day}`;
+        document.getElementById("decOutput").textContent = decimalValue;
+        
+        let hexSeq = [];
+        for (let i = dateOffset; i < dateOffset + 8; i++) {
+          hexSeq.push(uint8Array[i].toString(16).toUpperCase().padStart(2, '0'));
+        }
+        document.getElementById("hexOutput").textContent = hexSeq.join(' ');
+      }
+    }
+  };
+  
+  reader.readAsArrayBuffer(file);
+});
+
+// Vorwärts-Berechnung (wird ausgeführt bei Klick auf "Berechnen" oder beim Laden)
 function calculateBytes() {
   const dateInputElement = document.getElementById("dateInput");
   const dateValue = dateInputElement.value;
@@ -188,7 +278,7 @@ function calculateBytes() {
   document.getElementById("hexOutput").textContent = hexString;
 }
 
-// Skript direkt beim Laden einmal ausführen
+// Skript direkt beim Laden einmal manuell ausführen
 window.onload = calculateBytes;
 </script>
 

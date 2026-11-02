@@ -106,6 +106,11 @@
       color: #d63384;
       font-size: 20px;
     }
+    .game-highlight {
+      font-weight: bold;
+      color: #28a745;
+      font-size: 18px;
+    }
     .status-msg {
       margin-top: 15px;
       font-weight: bold;
@@ -120,14 +125,14 @@
   <h2>Timekeeper "ST M48T18"</h2>
   
   <div class="form-group">
-    <label for="dateInput">Ablauf-Datum auswählen:</label>
-    <input type="date" id="dateInput" max="2099-12-31" value="2033-04-30">
+    <label for="fileInput">Originale .bin Datei einlesen:</label>
+    <input type="file" id="fileInput" accept=".bin,.rom,.dat">
+    <div id="statusOutput" class="status-msg"></div>
   </div>
 
   <div class="form-group">
-    <label for="fileInput">Optional: .bin Datei zum Patchen hochladen:</label>
-    <input type="file" id="fileInput" accept=".bin">
-    <div id="statusOutput" class="status-msg"></div>
+    <label for="dateInput">Ablauf-Datum auswählen:</label>
+    <input type="date" id="dateInput" max="2099-12-31" value="2033-04-30">
   </div>
   
   <div class="btn-group">
@@ -136,8 +141,10 @@
   </div>
   
   <div class="output-box">
+    <div class="output-item">Spielname (Offset 0x01F20): <span id="gameOutput1" class="game-highlight">-</span></div>
+    <div class="output-item">Spielname (Offset 0x01F68): <span id="gameOutput2" class="game-highlight">-</span></div>
     <div class="output-item">Dezimalwert: <span id="decOutput" class="highlight">-</span></div>
-    <div class="output-item">Neue Byte-Sequenz: <span id="hexOutput" class="highlight">-</span></div>
+    <div class="output-item">Byte-Sequenz: <span id="hexOutput" class="highlight">-</span></div>
   </div>
 </div>
 
@@ -145,16 +152,86 @@
 const today = new Date().toISOString().split('T')[0];
 document.getElementById("dateInput").setAttribute("min", today);
 
-// Globale Definition der alten Such-Sequenz als Byte-Array
-const searchBytes = [0xF8, 0xA4, 0x1D, 0x10, 0x07, 0x5B, 0xE2, 0xEF];
+// Globale Definition des verifizierten Adress-Offsets
+const offsetBase = 0x01F20; 
+const dateOffset = offsetBase + 190; // Exakt 0x01FA2
+
+// Variable zum temporären Festhalten des Dateipuffers nach dem Laden
+let loadedFileBuffer = null;
+
+// Hilfsfunktion: Extrahiert saubere Textzeichen aus Binärdaten
+function readAsciiFromBin(uint8Array, startOffset, length) {
+  let text = "";
+  const end = Math.min(startOffset + length, uint8Array.length);
+  for (let i = startOffset; i < end; i++) {
+    const code = uint8Array[i];
+    if (code >= 32 && code <= 126) {
+      text += String.fromCharCode(code);
+    } else {
+      text += " ";
+    }
+  }
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+// Event-Listener: Automatische Analyse beim Laden der Datei
+document.getElementById('fileInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const statusOutput = document.getElementById("statusOutput");
+  statusOutput.textContent = "";
+
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    loadedFileBuffer = new Uint8Array(event.target.result);
+    
+    // 1. Beide Namen ausgeben
+    const name1 = readAsciiFromBin(loadedFileBuffer, offsetBase, 24);
+    document.getElementById("gameOutput1").textContent = name1 || "Leer / Nicht lesbar";
+
+    const name2 = readAsciiFromBin(loadedFileBuffer, offsetBase + 0x48, 24);
+    document.getElementById("gameOutput2").textContent = name2 || "Leer / Nicht lesbar";
+
+    // 2. Aktuelles Datum auslesen und rekonstruieren
+    if (loadedFileBuffer.length >= dateOffset + 8) {
+      const b0 = loadedFileBuffer[dateOffset];
+      const b1 = loadedFileBuffer[dateOffset + 1];
+      const b2 = loadedFileBuffer[dateOffset + 2];
+      const b3 = loadedFileBuffer[dateOffset + 3];
+      
+      const decimalValue = (b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)) >>> 0;
+      const dateInt = (decimalValue + 65) / 9;
+      const dateStr = Math.round(dateInt).toString().padStart(8, '0');
+      
+      const day = dateStr.substring(0, 2);
+      const month = dateStr.substring(2, 4);
+      const year = dateStr.substring(4, 8);
+      
+      if (!isNaN(dateInt) && dateInt > 0 && parseInt(year) >= 1990) {
+        document.getElementById("dateInput").value = `${year}-${month}-${day}`;
+        document.getElementById("decOutput").textContent = decimalValue;
+        
+        let hexSeq = [];
+        for (let i = dateOffset; i < dateOffset + 8; i++) {
+          hexSeq.push(loadedFileBuffer[i].toString(16).toUpperCase().padStart(2, '0'));
+        }
+        document.getElementById("hexOutput").textContent = hexSeq.join(' ');
+        statusOutput.textContent = "✅ Datei erfolgreich geladen und analysiert!";
+        statusOutput.style.color = "green";
+      } else {
+        statusOutput.textContent = "⚠️ Datei geladen, aber keine gültigen Laufzeitdaten am Offset gefunden.";
+        statusOutput.style.color = "orange";
+      }
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
 
 function processData() {
   const dateValue = document.getElementById("dateInput").value;
   const fileInput = document.getElementById("fileInput");
   const statusOutput = document.getElementById("statusOutput");
-  
-  statusOutput.textContent = "";
-  statusOutput.style.color = "initial";
 
   if (!dateValue) {
     alert("Bitte wähle ein gültiges Datum aus.");
@@ -174,7 +251,7 @@ function processData() {
   // Formelberechnung
   const decimalValue = dateInt * 9 - 65;
 
-  // Generierung der 8 neuen Bytes (4x Wert, 4x Komplement)
+  // Generierung der 8 neuen Bytes (Little Endian + Komplement)
   const byte0 = decimalValue & 0xFF;
   const byte1 = (decimalValue >> 8) & 0xFF;
   const byte2 = (decimalValue >> 16) & 0xFF;
@@ -184,7 +261,7 @@ function processData() {
   const complementBytes = valueBytes.map(b => (~b) & 0xFF);
   const newBytes = valueBytes.concat(complementBytes);
 
-  // Hex-Anzeige aktualisieren
+  // Anzeige aktualisieren
   const hexString = newBytes
     .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
     .join(' ');
@@ -192,59 +269,38 @@ function processData() {
   document.getElementById("decOutput").textContent = decimalValue;
   document.getElementById("hexOutput").textContent = hexString;
 
-  // Falls eine Datei ausgewählt wurde, führen wir den Patch aus
-  if (fileInput.files.length > 0) {
-    const file = fileInput.files[0];
-    const reader = new FileReader();
+  // Falls eine Datei eingelesen wurde, wird sie direkt an der Zieladresse gepatcht
+  if (fileInput.files.length > 0 && loadedFileBuffer) {
+    if (loadedFileBuffer.length < dateOffset + 8) {
+      statusOutput.textContent = "❌ Fehler: Datei ist zu kurz für dieses Adress-Offset!";
+      statusOutput.style.color = "red";
+      return;
+    }
 
-    reader.onload = function(e) {
-      const buffer = e.target.result;
-      const view = new Uint8Array(buffer);
-      let foundIndex = -1;
+    // Präzise Zuweisung an der Zieladresse ohne Suchschleife
+    for (let j = 0; j < newBytes.length; j++) {
+      loadedFileBuffer[dateOffset + j] = newBytes[j];
+    }
 
-      // Datei nach der alten Byte-Sequenz durchsuchen
-      for (let i = 0; i <= view.length - searchBytes.length; i++) {
-        let match = true;
-        for (let j = 0; j < searchBytes.length; j++) {
-          if (view[i + j] !== searchBytes[j]) {
-            match = false;
-            break;
-          }
-        }
-        if (match) {
-          foundIndex = i;
-          break; // Erste Fundstelle reicht
-        }
-      }
+    // Download auslösen
+    const blob = new Blob([loadedFileBuffer], { type: "application/octet-stream" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "patched_" + fileInput.files[0].name;
+    link.click();
 
-      if (foundIndex === -1) {
-        statusOutput.textContent = "❌ Suchsequenz in Datei nicht gefunden!";
-        statusOutput.style.color = "red";
-        return;
-      }
-
-      // Bytes an der gefundenen Position mit den neuen Werten überschreiben
-      for (let j = 0; j < newBytes.length; j++) {
-        view[foundIndex + j] = newBytes[j];
-      }
-
-      // Neue Datei im Browser zum Download generieren
-      const blob = new Blob([view], { type: "application/octet-stream" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "patched_" + file.name;
-      link.click();
-
-      statusOutput.textContent = "✅ Datei erfolgreich gepatcht und heruntergeladen!";
-      statusOutput.style.color = "green";
-    };
-
-    reader.readAsArrayBuffer(file);
+    statusOutput.textContent = "✅ Datei erfolgreich am Offset gepatcht und heruntergeladen!";
+    statusOutput.style.color = "green";
+  } else {
+    statusOutput.textContent = "ℹ️ Bytes berechnet. (Keine Datei zum Patchen ausgewählt)";
+    statusOutput.style.color = "blue";
   }
 }
 
 // Initial beim Laden einmal berechnen
-window.onload = processData;
+window.onload = function() {
+  processData();
+};
 </script>
 
 </body>
