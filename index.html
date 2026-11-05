@@ -55,25 +55,61 @@
       <div class="card-header">
        <h4 class="card-title mb-0">Tools für <img src="löwen.png" alt="" border="0" width="26" height="26"> NSM-Löwen / Panther <img src="panther.png" alt="" border="0" width="26" height="26"></h4>
       </div>
-      <div class="card-body"><!-- Flex-Container: Richtet Buttons (links) und Bilder (rechts) nebeneinander aus -->
-       <div class="d-flex flex-column flex-md-row gap-4"><!-- Linke Seite: Buttons untereinander -->
-        <div class="d-grid gap-2 flex-grow-1" style="min-width: 280px; align-self: start;"><a href="LZ_St25.html" class="btn btn-primary w-100 text-start py-3">Laufzeitberechnung STE 25 NSM</a> <a href="Umrechnung_HEX_DEZ.html" class="btn btn-primary w-100 text-start py-3">Encoder / Decoder ST25 NSM</a> <a href="nsm_Ablauf_patcher.html" class="btn btn-primary w-100 text-start py-3">Ablauf Patcher NSM</a> <a href="Zulassungs_Nr._NVRAM_Patcher.html" class="btn btn-primary w-100 text-start py-3">Zulassungs Nr. NVRAM Patcher ST25 NSM</a> <a href="ZL_Anleitung.html" class="btn btn-primary w-100 text-start py-3">Zul. Nr. auf Original ändern "Anleitung" ST25 NSM</a> <a href="Uhrzeit_stellen_M48T18.html" class="btn btn-primary w-100 text-start py-3">Aktuelles Datum und Uhrzeit setzen -1 Std. NSM</a>
-        </div><!-- Rechte Seite: Bilder untereinander -->
-        <div style="flex-basis: 300px; flex-shrink: 0;"><img src="Zul2.jpg" alt="" class="img-fluid rounded border mb-3" style="display: block !important; width: 100%;"> <img src="Zul1.jpg" alt="" class="img-fluid rounded border mb-3" style="display: block !important; width: 100%;"> <img src="3004.jpg" alt="" class="img-fluid rounded border mb-3" style="display: block !important; width: 100%;"> <img src="2044.jpg" alt="" class="img-fluid rounded border mb-3" style="display: block !important; width: 100%;">
+     <div class="card-body">
+    <!-- FLEX-CONTAINER: Richtet Buttons (links) und Bilder (rechts) nebeneinander aus -->
+    <div class="d-flex flex-column flex-md-row gap-4">
+        
+        <!-- LINKS: BUTTON-SPALTE (Mindestbreite 280px) -->
+        <div class="d-grid gap-3 flex-grow-1" style="min-width: 280px; align-self: start;">
+            
+            <!-- BUTTON-LISTE: Zeilen zum Hinzufügen, Ändern oder Löschen -->
+			<a href="ZL_Anleitung.html" class="btn btn-primary w-100 text-start py-3">Zul. Nr. auf Original ändern "Anleitung" ST25 NSM</a> 
+            <a href="Zulassungs_Nr._NVRAM_Patcher.html" class="btn btn-primary w-100 text-start py-3">Zulassungs Nr. NVRAM Patcher ST25 NSM</a> 
+            <a href="Umrechnung_HEX_DEZ.html" class="btn btn-primary w-100 text-start py-3">Ablauf Datum Encoder / Decoder ST25 NSM</a> 
+            <a href="nsm_Ablauf_patcher.html" class="btn btn-primary w-100 text-start py-3">Ablauf Patcher NSM ST25</a>
+			<a href="Uhrzeit_stellen_M48T18.html" class="btn btn-primary w-100 text-start py-3">Aktuelles Datum und Uhrzeit setzen -1 Std. NSM</a>
+            
         </div>
+        
+        <!-- RECHTS: BILDER-SPALTE (Feste Basis von 300px) -->
+        <div style="flex-basis: 300px; flex-shrink: 0;">
+            
+            <!-- BILDER-LISTE: Zeilen zum Hinzufügen, Ändern oder Löschen -->
+            <img src="Zul2.jpg" alt="" class="img-fluid rounded border mb-3" style="display: block !important; width: 100%;"> 
+            <img src="Zul1.jpg" alt="" class="img-fluid rounded border mb-3" style="display: block !important; width: 100%;"> 
+            <img src="3004.jpg" alt="" class="img-fluid rounded border mb-3" style="display: block !important; width: 100%;"> 
+            <img src="2044.jpg" alt="" class="img-fluid rounded border mb-3" style="display: block !important; width: 100%;">
+            
+        </div>
+        
+    </div>
+</div>
+
+        </div> <!-- Schließende Container-Tags aus deinem Original-Layout -->
        </div>
       </div>
-      <footer class="footer mt-auto">
-       <div class="container py-3">
-        <p class="text-body-secondary mb-1">2026 Automaten-Blödsinn</p>
-        <p class="small text-body-secondary mt-3">Dieses Program ist freie Software; In den <a href="https://github.com">Quelldateien</a> können Sie die <a href="https://github.com/BabaJagaPit/NSM_St25_Tools/blob/main/LICENSE">Bedingungen für die Weitergabe</a> nachlesen. <a href="https://www.gnu.de/documents/gpl-3.0.de.html">Hier finden sie die deutsche Übersetzung der LICENSE.</a> Es gibt KEINE GARANTIE; nicht einmal die implizite Garantie der MARKTFÄHIGKEIT oder der ERFÜLLUNG EINES BESTIMMTEN ZWECKES.</p>
-        <p class="small text-body-secondary mb-0">Alle auf dieser Website verwendeten Markennamen, Icons und Bilder werden lediglich informativ und für Bezeichnungszwecke verwendet.</p>
-       </div>
-      </footer>
+      
+      <!-- FOOTER CONTAINER: Macht den Footer schmaler und richtet ihn Linksbündig aus -->
+      <div class="container px-0 mt-4">
+        <div class="row mx-0 justify-content-start">
+          
+          <!-- FOOTER: Weniger Transparenz (bg-opacity-85), abgerundet (rounded-3) und schmaler (col-xl-10) -->
+          <footer class="footer py-3 bg-body-tertiary bg-opacity-85 rounded-3 border col-10 col-xl-12 mx-auto">
+           <div class="container">
+            <p class="text-body-secondary mb-1">2026 Automaten-Blödsinn</p>
+            <p class="small text-body-secondary mt-3">Dieses Program ist freie Software; In den <a href="https://github.com/BabaJagaPit/NSM_St25_Tools">Quelldateien</a> können Sie die <a href="https://github.com/BabaJagaPit/NSM_St25_Tools/blob/main/LICENSE">Bedingungen für die Weitergabe</a> nachlesen. <a href="https://www.gnu.de/documents/gpl-3.0.de.html">Hier finden sie die deutsche Übersetzung der LICENSE.</a> Es gibt KEINE GARANTIE; nicht einmal die implizite Garantie der MARKTFÄHIGKEIT oder der ERFÜLLUNG EINES BESTIMMTEN ZWECKES.</p>
+            <p class="small text-body-secondary mb-0">Alle auf dieser Website verwendeten Markennamen, Icons und Bilder werden lediglich informativ und für Bezeichnungszwecke verwendet.</p>
+           </div>
+          </footer>
+          
+        </div>
+      </div>
+      
      </div>
     </div>
    </div>
   </main>
+  
   <script>
     window.addEventListener("DOMContentLoaded", function(e) {
       window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches && document.documentElement.setAttribute("data-bs-theme", "dark")
