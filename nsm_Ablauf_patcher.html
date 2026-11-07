@@ -13,7 +13,6 @@
       background-repeat: no-repeat;
       background-position: center center;
       background-attachment: fixed;
-      /* ---------------------------------- */
       color: #333;
       display: flex;
       justify-content: center;
@@ -23,34 +22,40 @@
       padding: 20px;
       box-sizing: border-box;
     }
+
     .container {
-      background: rgba(255, 255, 255, 0.95); /* Leicht transparent für einheitlichen Look */
+      background: rgba(255, 255, 255, 0.95);
       padding: 45px;
       border-radius: 12px;
       box-shadow: 0 6px 25px rgba(0,0,0,0.2);
       width: 100%;
       max-width: 650px;
     }
+
     h2 {
       margin-top: 0;
       color: #007BFF;
       font-size: 32px;
       margin-bottom: 8px;
     }
+
     h2 + h2 {
       color: #555;
       font-size: 24px;
       margin-bottom: 30px;
     }
+
     .form-group {
       margin-bottom: 25px;
     }
+
     label {
       display: block;
       margin-bottom: 12px;
       font-weight: bold;
       font-size: 18px;
     }
+
     input[type="date"], input[type="file"] {
       width: 100%;
       padding: 14px;
@@ -61,11 +66,13 @@
       font-family: inherit;
       background-color: #fff;
     }
+
     .btn-group {
       display: flex;
       gap: 15px;
       margin-bottom: 10px;
     }
+
     button {
       flex: 2;
       padding: 18px;
@@ -77,16 +84,30 @@
       cursor: pointer;
       font-weight: bold;
     }
+
     button:hover {
       background-color: #0056b3;
     }
+
     .btn-back {
       flex: 1;
       background-color: #6c757d;
     }
+
     .btn-back:hover {
       background-color: #5a6268;
     }
+
+    /* Neuer MEGA-Button Style */
+    .btn-mega {
+      background-color: #d63384;
+      display: none; /* Standardmäßig unsichtbar */
+    }
+
+    .btn-mega:hover {
+      background-color: #b8236c;
+    }
+
     .output-box {
       margin-top: 30px;
       padding: 25px;
@@ -95,22 +116,27 @@
       font-family: monospace;
       font-size: 18px;
     }
+
     .output-item {
       margin-bottom: 15px;
     }
+
     .output-item:last-child {
       margin-bottom: 0;
     }
+
     .highlight {
       font-weight: bold;
       color: #d63384;
       font-size: 20px;
     }
+
     .game-highlight {
       font-weight: bold;
       color: #28a745;
       font-size: 18px;
     }
+
     .status-msg {
       margin-top: 15px;
       font-weight: bold;
@@ -123,7 +149,7 @@
 <div class="container">
   <h2>Laufzeit Berechnung NSM St25</h2>
   <h2>Timekeeper "ST M48T18"</h2>
-  
+    
   <div class="form-group">
     <label for="fileInput">Originale .bin Datei einlesen:</label>
     <input type="file" id="fileInput" accept=".bin,.rom,.dat">
@@ -134,12 +160,12 @@
     <label for="dateInput">Ablauf-Datum auswählen:</label>
     <input type="date" id="dateInput" max="2099-12-31" value="2033-04-30">
   </div>
-  
+    
   <div class="btn-group">
     <button class="btn-back" onclick="window.history.back();">⬅ Zurück</button>
     <button onclick="processData()">Berechnen & Patchen</button>
-  </div>
-  
+    <button id="megaBtn" class="btn-mega" onclick="openMegaRequest()">📂 Bitte original "TK.bin" hochladen. Vielen Dank!😊</button>  </div>
+    
   <div class="output-box">
     <div class="output-item">Spielname (Offset 0x01F20): <span id="gameOutput1" class="game-highlight">-</span></div>
     <div class="output-item">Spielname (Offset 0x01F68): <span id="gameOutput2" class="game-highlight">-</span></div>
@@ -149,159 +175,147 @@
 </div>
 
 <script>
-const today = new Date().toISOString().split('T')[0];
-document.getElementById("dateInput").setAttribute("min", today);
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById("dateInput").setAttribute("min", today);
 
-// Globale Definition des verifizierten Adress-Offsets
-const offsetBase = 0x01F20; 
-const dateOffset = offsetBase + 190; // Exakt 0x01FA2
+  const offsetBase = 0x01F20; 
+  const dateOffset = offsetBase + 190; // Exakt 0x01FA2
 
-// Variable zum temporären Festhalten des Dateipuffers nach dem Laden
-let loadedFileBuffer = null;
+  let loadedFileBuffer = null;
 
-// Hilfsfunktion: Extrahiert saubere Textzeichen aus Binärdaten
-function readAsciiFromBin(uint8Array, startOffset, length) {
-  let text = "";
-  const end = Math.min(startOffset + length, uint8Array.length);
-  for (let i = startOffset; i < end; i++) {
-    const code = uint8Array[i];
-    if (code >= 32 && code <= 126) {
-      text += String.fromCharCode(code);
-    } else {
-      text += " ";
-    }
-  }
-  return text.replace(/\s+/g, ' ').trim();
-}
-
-// Event-Listener: Automatische Analyse beim Laden der Datei
-document.getElementById('fileInput').addEventListener('change', function(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const statusOutput = document.getElementById("statusOutput");
-  statusOutput.textContent = "";
-
-  const reader = new FileReader();
-  reader.onload = function(event) {
-    loadedFileBuffer = new Uint8Array(event.target.result);
-    
-    // 1. Beide Namen ausgeben
-    const name1 = readAsciiFromBin(loadedFileBuffer, offsetBase, 24);
-    document.getElementById("gameOutput1").textContent = name1 || "Leer / Nicht lesbar";
-
-    const name2 = readAsciiFromBin(loadedFileBuffer, offsetBase + 0x48, 24);
-    document.getElementById("gameOutput2").textContent = name2 || "Leer / Nicht lesbar";
-
-    // 2. Aktuelles Datum auslesen und rekonstruieren
-    if (loadedFileBuffer.length >= dateOffset + 8) {
-      const b0 = loadedFileBuffer[dateOffset];
-      const b1 = loadedFileBuffer[dateOffset + 1];
-      const b2 = loadedFileBuffer[dateOffset + 2];
-      const b3 = loadedFileBuffer[dateOffset + 3];
-      
-      const decimalValue = (b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)) >>> 0;
-      const dateInt = (decimalValue + 65) / 9;
-      const dateStr = Math.round(dateInt).toString().padStart(8, '0');
-      
-      const day = dateStr.substring(0, 2);
-      const month = dateStr.substring(2, 4);
-      const year = dateStr.substring(4, 8);
-      
-      if (!isNaN(dateInt) && dateInt > 0 && parseInt(year) >= 1990) {
-        document.getElementById("dateInput").value = `${year}-${month}-${day}`;
-        document.getElementById("decOutput").textContent = decimalValue;
-        
-        let hexSeq = [];
-        for (let i = dateOffset; i < dateOffset + 8; i++) {
-          hexSeq.push(loadedFileBuffer[i].toString(16).toUpperCase().padStart(2, '0'));
-        }
-        document.getElementById("hexOutput").textContent = hexSeq.join(' ');
-        statusOutput.textContent = "✅ Datei erfolgreich geladen und analysiert!";
-        statusOutput.style.color = "green";
+  function readAsciiFromBin(uint8Array, startOffset, length) {
+    let text = "";
+    const end = Math.min(startOffset + length, uint8Array.length);
+    for (let i = startOffset; i < end; i++) {
+      const code = uint8Array[i];
+      if (code >= 32 && code <= 126) {
+        text += String.fromCharCode(code);
       } else {
-        statusOutput.textContent = "⚠️ Datei geladen, aber keine gültigen Laufzeitdaten am Offset gefunden.";
-        statusOutput.style.color = "orange";
+        text += " ";
       }
     }
-  };
-  reader.readAsArrayBuffer(file);
-});
-
-function processData() {
-  const dateValue = document.getElementById("dateInput").value;
-  const fileInput = document.getElementById("fileInput");
-  const statusOutput = document.getElementById("statusOutput");
-
-  if (!dateValue) {
-    alert("Bitte wähle ein gültiges Datum aus.");
-    return;
+    return text.replace(/\s+/g, ' ').trim();
   }
 
-  if (dateValue < today || dateValue > "2099-12-31") {
-    alert("Das Datum muss zwischen heute und dem 31.12.2099 liegen.");
-    return;
+  document.getElementById('fileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const statusOutput = document.getElementById("statusOutput");
+    statusOutput.textContent = "";
+    document.getElementById("megaBtn").style.display = "none"; // Bei neuer Datei verstecken
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      loadedFileBuffer = new Uint8Array(event.target.result);
+          
+      const name1 = readAsciiFromBin(loadedFileBuffer, offsetBase, 24);
+      document.getElementById("gameOutput1").textContent = name1 || "Leer / Nicht lesbar";
+      const name2 = readAsciiFromBin(loadedFileBuffer, offsetBase + 0x48, 24);
+      document.getElementById("gameOutput2").textContent = name2 || "Leer / Nicht lesbar";
+
+      if (loadedFileBuffer.length >= dateOffset + 8) {
+        const b0 = loadedFileBuffer[dateOffset];
+        const b1 = loadedFileBuffer[dateOffset + 1];
+        const b2 = loadedFileBuffer[dateOffset + 2];
+        const b3 = loadedFileBuffer[dateOffset + 3];
+              
+        const decimalValue = (b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)) >>> 0;
+        const dateInt = (decimalValue + 65) / 9;
+        const dateStr = Math.round(dateInt).toString().padStart(8, '0');
+              
+        const day = dateStr.substring(0, 2);
+        const month = dateStr.substring(2, 4);
+        const year = dateStr.substring(4, 8);
+              
+        if (!isNaN(dateInt) && dateInt > 0 && parseInt(year) >= 1990) {
+          document.getElementById("dateInput").value = `${year}-${month}-${day}`;
+          document.getElementById("decOutput").textContent = decimalValue;
+                  
+          let hexSeq = [];
+          for (let i = dateOffset; i < dateOffset + 8; i++) {
+            hexSeq.push(loadedFileBuffer[i].toString(16).toUpperCase().padStart(2, '0'));
+          }
+          document.getElementById("hexOutput").textContent = hexSeq.join(' ');
+          statusOutput.textContent = "✅ Datei erfolgreich geladen und analysiert!";
+          statusOutput.style.color = "green";
+        } else {
+          statusOutput.textContent = "⚠️ Datei geladen, aber keine gültigen Laufzeitdaten am Offset gefunden.";
+          statusOutput.style.color = "orange";
+        }
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  function openMegaRequest() {
+    window.open("https://mega.nz/filerequest/LswsB1TUZ-E", "_blank");
   }
 
-  // Formatierung des Datums zu TTMMJJJJ
-  const parts = dateValue.split("-");
-  const formattedDateStr = parts[2] + parts[1] + parts[0]; 
-  const dateInt = parseInt(formattedDateStr);
+  function processData() {
+    const dateValue = document.getElementById("dateInput").value;
+    const fileInput = document.getElementById("fileInput");
+    const statusOutput = document.getElementById("statusOutput");
 
-  // Formelberechnung
-  const decimalValue = dateInt * 9 - 65;
-
-  // Generierung der 8 neuen Bytes (Little Endian + Komplement)
-  const byte0 = decimalValue & 0xFF;
-  const byte1 = (decimalValue >> 8) & 0xFF;
-  const byte2 = (decimalValue >> 16) & 0xFF;
-  const byte3 = (decimalValue >> 24) & 0xFF;
-  
-  const valueBytes = [byte0, byte1, byte2, byte3];
-  const complementBytes = valueBytes.map(b => (~b) & 0xFF);
-  const newBytes = valueBytes.concat(complementBytes);
-
-  // Anzeige aktualisieren
-  const hexString = newBytes
-    .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
-    .join(' ');
-
-  document.getElementById("decOutput").textContent = decimalValue;
-  document.getElementById("hexOutput").textContent = hexString;
-
-  // Falls eine Datei eingelesen wurde, wird sie direkt an der Zieladresse gepatcht
-  if (fileInput.files.length > 0 && loadedFileBuffer) {
-    if (loadedFileBuffer.length < dateOffset + 8) {
-      statusOutput.textContent = "❌ Fehler: Datei ist zu kurz für dieses Adress-Offset!";
-      statusOutput.style.color = "red";
+    if (!dateValue) {
+      alert("Bitte wähle ein gültiges Datum aus.");
+      return;
+    }
+    if (dateValue < today || dateValue > "2099-12-31") {
+      alert("Das Datum muss zwischen heute und dem 31.12.2099 liegen.");
       return;
     }
 
-    // Präzise Zuweisung an der Zieladresse ohne Suchschleife
-    for (let j = 0; j < newBytes.length; j++) {
-      loadedFileBuffer[dateOffset + j] = newBytes[j];
+    const parts = dateValue.split("-");
+    const formattedDateStr = parts[2] + parts[1] + parts[0]; 
+    const dateInt = parseInt(formattedDateStr);
+
+    const decimalValue = dateInt * 9 - 65;
+
+    const byte0 = decimalValue & 0xFF;
+    const byte1 = (decimalValue >> 8) & 0xFF;
+    const byte2 = (decimalValue >> 16) & 0xFF;
+    const byte3 = (decimalValue >> 24) & 0xFF;
+      
+    const valueBytes = [byte0, byte1, byte2, byte3];
+    const complementBytes = valueBytes.map(b => (~b) & 0xFF);
+    const newBytes = valueBytes.concat(complementBytes);
+
+    const hexString = newBytes
+      .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
+      .join(' ');
+    document.getElementById("decOutput").textContent = decimalValue;
+    document.getElementById("hexOutput").textContent = hexString;
+
+    if (fileInput.files.length > 0 && loadedFileBuffer) {
+      if (loadedFileBuffer.length < dateOffset + 8) {
+        statusOutput.textContent = "❌ Fehler: Datei ist zu kurz für dieses Adress-Offset!";
+        statusOutput.style.color = "red";
+        return;
+      }
+      
+      for (let j = 0; j < newBytes.length; j++) {
+        loadedFileBuffer[dateOffset + j] = newBytes[j];
+      }
+
+      const blob = new Blob([loadedFileBuffer], { type: "application/octet-stream" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "patched_" + fileInput.files[0].name;
+      link.click();
+
+      statusOutput.textContent = "✅ Datei erfolgreich am Offset gepatcht und heruntergeladen!";
+      statusOutput.style.color = "green";
+      document.getElementById("megaBtn").style.display = "inline-block"; 
+    } else {
+      statusOutput.textContent = "ℹ️ Bytes berechnet. (Keine Datei zum Patchen ausgewählt)";
+      statusOutput.style.color = "blue";
     }
-
-    // Download auslösen
-    const blob = new Blob([loadedFileBuffer], { type: "application/octet-stream" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "patched_" + fileInput.files[0].name;
-    link.click();
-
-    statusOutput.textContent = "✅ Datei erfolgreich am Offset gepatcht und heruntergeladen!";
-    statusOutput.style.color = "green";
-  } else {
-    statusOutput.textContent = "ℹ️ Bytes berechnet. (Keine Datei zum Patchen ausgewählt)";
-    statusOutput.style.color = "blue";
   }
-}
 
-// Initial beim Laden einmal berechnen
-window.onload = function() {
-  processData();
-};
+  window.onload = function() {
+    processData();
+  };
 </script>
-
 </body>
 </html>
